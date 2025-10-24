@@ -24,12 +24,114 @@ function Dashboard() {
   const [isTyping, setIsTyping] = useState(false)
   const chatEndRef = useRef(null)
 
+  // Integration state
+  const [integrations, setIntegrations] = useState({
+    googleCalendar: {
+      connected: false,
+      email: null,
+      accessToken: null
+    },
+    slack: {
+      connected: false,
+      workspace: null
+    },
+    discord: {
+      connected: false,
+      serverId: null
+    }
+  })
+
   // Check authentication
   useEffect(() => {
     if (!localStorage.getItem('isAuthenticated')) {
       navigate('/signin')
     }
   }, [navigate])
+
+  // Handle OAuth callback from Google
+  useEffect(() => {
+    const urlParams = new URLSearchParams(window.location.search)
+    const code = urlParams.get('code')
+    const state = urlParams.get('state')
+    const savedState = sessionStorage.getItem('oauth_state')
+    
+    if (code && state && state === savedState) {
+      // Clear the state
+      sessionStorage.removeItem('oauth_state')
+      
+      // Exchange authorization code for tokens on backend
+      const exchangeCodeForTokens = async () => {
+        try {
+          // TODO: Replace this mock with actual backend call
+          // TEMPORARY MOCK - Remove when backend is ready
+          // Set to false when backend is running on http://localhost:5000
+          const MOCK_MODE = true // Set to false when backend is implemented
+          
+          if (MOCK_MODE) {
+            // Simulate backend delay
+            await new Promise(resolve => setTimeout(resolve, 1000))
+            
+            // Mock successful response
+            const mockData = {
+              email: localStorage.getItem('userEmail') || 'user@example.com',
+              success: true
+            }
+            
+            // Update state to show connected
+            setIntegrations(prev => ({
+              ...prev,
+              googleCalendar: {
+                connected: true,
+                email: mockData.email,
+                accessToken: null // Never store in frontend
+              }
+            }))
+            
+            alert('Google Calendar connected successfully! 🎉\n(Using mock - implement backend to make it real)')
+          } else {
+            // Real backend call - Backend should be running on http://localhost:5000
+            const response = await fetch('http://localhost:5000/api/oauth/google/callback', {
+              method: 'POST',
+              headers: {
+                'Content-Type': 'application/json',
+                'Authorization': `Bearer ${localStorage.getItem('authToken')}`
+              },
+              body: JSON.stringify({
+                code: code,
+                userId: localStorage.getItem('userEmail')
+              })
+            })
+            
+            if (response.ok) {
+              const data = await response.json()
+              
+              // Update state to show connected
+              setIntegrations(prev => ({
+                ...prev,
+                googleCalendar: {
+                  connected: true,
+                  email: data.email,
+                  accessToken: null // Never store in frontend
+                }
+              }))
+              
+              alert('Google Calendar connected successfully! 🎉')
+            } else {
+              throw new Error('Failed to exchange code for tokens')
+            }
+          }
+        } catch (error) {
+          console.error('OAuth error:', error)
+          alert('Failed to connect Google Calendar. Please try again.')
+        }
+        
+        // Clean up URL
+        window.history.replaceState({}, document.title, window.location.pathname)
+      }
+      
+      exchangeCodeForTokens()
+    }
+  }, [setIntegrations])
 
   const handleLogout = () => {
     localStorage.removeItem('isAuthenticated')
@@ -117,6 +219,72 @@ function Dashboard() {
       
       setTimeout(() => chatEndRef.current?.scrollIntoView({ behavior: 'smooth' }), 100)
     }, 1500)
+  }
+
+  // Google Calendar OAuth handlers
+  const handleGoogleCalendarAuth = () => {
+    // Google OAuth configuration - Client ID from environment variable (safer for production)
+    const GOOGLE_CLIENT_ID = import.meta.env.VITE_GOOGLE_CLIENT_ID || '107996813971-aepcl9j7ffne9vjiofii5tfe7msd30vc.apps.googleusercontent.com'
+    const REDIRECT_URI = window.location.origin + '/dashboard'
+    const SCOPE = 'https://www.googleapis.com/auth/calendar https://www.googleapis.com/auth/calendar.events'
+    
+    // IMPORTANT: Using 'response_type=code' (Authorization Code Flow)
+    // This is more secure and allows refresh tokens with 'access_type=offline'
+    // The code will be exchanged for tokens on the backend
+    const authUrl = `https://accounts.google.com/o/oauth2/v2/auth?` +
+      `client_id=${GOOGLE_CLIENT_ID}&` +
+      `redirect_uri=${encodeURIComponent(REDIRECT_URI)}&` +
+      `response_type=code&` + // Changed from 'token' to 'code'
+      `scope=${encodeURIComponent(SCOPE)}&` +
+      `access_type=offline&` + // Now this will work! Returns refresh token
+      `prompt=consent` // Forces consent screen to ensure refresh token is returned
+    
+    // Save state to verify callback
+    const state = Math.random().toString(36).substring(7)
+    sessionStorage.setItem('oauth_state', state)
+    
+    // Redirect to Google OAuth (full page redirect for Authorization Code Flow)
+    window.location.href = authUrl + `&state=${state}`
+  }
+
+  const handleDisconnectGoogleCalendar = () => {
+    if (confirm('Are you sure you want to disconnect Google Calendar?')) {
+      setIntegrations(prev => ({
+        ...prev,
+        googleCalendar: {
+          connected: false,
+          email: null,
+          accessToken: null
+        }
+      }))
+      
+      // Remove from backend
+      removeIntegrationFromBackend('googleCalendar')
+      
+      alert('Google Calendar disconnected')
+    }
+  }
+
+  const handleIntegrationConnect = (integrationName) => {
+    // Handle other integrations
+    alert(`${integrationName} integration - Setup in progress!`)
+  }
+
+  const removeIntegrationFromBackend = async (integrationType) => {
+    try {
+      await fetch(`/api/integrations/${integrationType}`, {
+        method: 'DELETE',
+        headers: {
+          'Authorization': `Bearer ${localStorage.getItem('authToken')}`
+        }
+      })
+      
+      console.log('Integration removed from backend')
+    } catch (error) {
+      console.error('Error removing integration:', error)
+      // Remove from localStorage
+      localStorage.removeItem(`integration_${integrationType}`)
+    }
   }
 
   return (
@@ -650,14 +818,92 @@ function Dashboard() {
                 Connect Your <span style={{ color: '#75FDA8' }}>Tools</span>
               </h2>
               
+              {/* Google Calendar Section - Featured */}
+              <div className="mb-8 p-6 rounded-xl shadow-lg" style={{ backgroundColor: '#2D2D2D', border: '2px solid #75FDA8' }}>
+                <div className="flex items-center justify-between mb-4">
+                  <div className="flex items-center space-x-4">
+                    <div className="text-6xl">📅</div>
+                    <div>
+                      <h3 className="text-2xl font-bold" style={{ color: '#FFFFFF' }}>
+                        Google Calendar
+                      </h3>
+                      <p className="text-sm mt-1" style={{ color: '#E5E7EB' }}>
+                        Allow AI to schedule meetings and check availability
+                      </p>
+                    </div>
+                  </div>
+                  {integrations.googleCalendar.connected ? (
+                    <div className="flex items-center space-x-4">
+                      <div className="text-right">
+                        <div className="flex items-center space-x-2">
+                          <span className="text-2xl">✓</span>
+                          <span className="font-semibold" style={{ color: '#75FDA8' }}>Connected</span>
+                        </div>
+                        <p className="text-sm mt-1" style={{ color: '#E5E7EB' }}>
+                          {integrations.googleCalendar.email}
+                        </p>
+                      </div>
+                      <button
+                        onClick={() => handleDisconnectGoogleCalendar()}
+                        className="px-6 py-2 rounded-lg font-medium transition-all duration-300"
+                        style={{ backgroundColor: '#FF6B6B', color: '#FFFFFF' }}
+                        onMouseEnter={(e) => {
+                          e.target.style.backgroundColor = '#CC0000'
+                        }}
+                        onMouseLeave={(e) => {
+                          e.target.style.backgroundColor = '#FF6B6B'
+                        }}
+                      >
+                        Disconnect
+                      </button>
+                    </div>
+                  ) : (
+                    <button
+                      onClick={() => handleGoogleCalendarAuth()}
+                      className="px-8 py-3 rounded-lg font-semibold transition-all duration-300 flex items-center space-x-2"
+                      style={{ backgroundColor: '#75FDA8', color: '#2D2D2D' }}
+                      onMouseEnter={(e) => {
+                        e.target.style.backgroundColor = '#27705D'
+                        e.target.style.color = '#FFFFFF'
+                      }}
+                      onMouseLeave={(e) => {
+                        e.target.style.backgroundColor = '#75FDA8'
+                        e.target.style.color = '#2D2D2D'
+                      }}
+                    >
+                      <span>🔐</span>
+                      <span>Connect with Google</span>
+                    </button>
+                  )}
+                </div>
+                
+                {integrations.googleCalendar.connected && (
+                  <div className="mt-4 p-4 rounded-lg" style={{ backgroundColor: '#1F1F1F' }}>
+                    <h4 className="font-semibold mb-2" style={{ color: '#75FDA8' }}>
+                      Permissions Granted:
+                    </h4>
+                    <ul className="space-y-2 text-sm" style={{ color: '#E5E7EB' }}>
+                      <li>✓ View calendar events</li>
+                      <li>✓ Create new events</li>
+                      <li>✓ Check availability</li>
+                      <li>✓ Send meeting invitations</li>
+                    </ul>
+                  </div>
+                )}
+              </div>
+
+              {/* Other Integrations */}
+              <h3 className="text-xl font-semibold mb-4" style={{ color: '#FFFFFF' }}>
+                Other Integrations
+              </h3>
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
                 {[
-                  { name: 'Google Calendar', icon: '📅', status: 'available' },
-                  { name: 'Twilio SMS', icon: '📱', status: 'coming-soon' },
-                  { name: 'Slack', icon: '💬', status: 'available' },
-                  { name: 'Zapier', icon: '⚡', status: 'available' },
-                  { name: 'Salesforce', icon: '☁️', status: 'coming-soon' },
-                  { name: 'Custom API', icon: '🔧', status: 'available' }
+                  { name: 'Twilio SMS', icon: '📱', status: 'coming-soon', description: 'Send SMS notifications' },
+                  { name: 'Slack', icon: '💬', status: 'available', description: 'Connect to Slack workspace' },
+                  { name: 'Discord', icon: '🎮', status: 'available', description: 'Integrate with Discord server' },
+                  { name: 'Zapier', icon: '⚡', status: 'available', description: 'Connect 5000+ apps' },
+                  { name: 'Salesforce', icon: '☁️', status: 'coming-soon', description: 'CRM integration' },
+                  { name: 'Custom Webhook', icon: '🔧', status: 'available', description: 'Custom API endpoints' }
                 ].map((integration, idx) => (
                   <div 
                     key={idx}
@@ -673,11 +919,14 @@ function Dashboard() {
                     }}
                   >
                     <div className="text-5xl mb-4 text-center">{integration.icon}</div>
-                    <h3 className="text-xl font-semibold text-center mb-3" style={{ color: '#FFFFFF' }}>
+                    <h3 className="text-xl font-semibold text-center mb-2" style={{ color: '#FFFFFF' }}>
                       {integration.name}
                     </h3>
+                    <p className="text-sm text-center mb-4" style={{ color: '#E5E7EB' }}>
+                      {integration.description}
+                    </p>
                     <button
-                      onClick={() => alert(`${integration.name} integration - Coming soon!`)}
+                      onClick={() => handleIntegrationConnect(integration.name)}
                       className="w-full py-2 rounded-lg font-medium transition-all duration-300"
                       style={{
                         backgroundColor: integration.status === 'available' ? '#75FDA8' : '#E5E7EB',

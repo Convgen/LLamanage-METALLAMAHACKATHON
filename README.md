@@ -55,6 +55,7 @@ A comprehensive business dashboard with 6 main sections:
    - Real-time responses
 
 5. **🔗 Integrations**
+   - **Google Calendar OAuth** - Schedule meetings, check availability
    - Connect external services
    - Slack, Discord, Webhook support
    - Easy API key management
@@ -73,12 +74,14 @@ A comprehensive business dashboard with 6 main sections:
 - **Flow Builder**: React Flow
 - **Font**: Inter (Google Fonts)
 - **State Management**: React Hooks (useState, useEffect, useRef)
+- **Integrations**: Google Calendar API, OAuth 2.0
 
 ## 🚀 Getting Started
 
 ### Prerequisites
 - Node.js 18+ installed
 - npm or yarn package manager
+- Google Cloud Console account (for Calendar integration)
 
 ### Installation
 
@@ -93,7 +96,12 @@ A comprehensive business dashboard with 6 main sections:
    npm install
    ```
 
-3. **Start development server**
+3. **Configure Google Calendar (Optional)**
+   - Follow the setup guide in `GOOGLE_CALENDAR_SETUP.md`
+   - Get your Google Client ID
+   - Update `src/pages/Dashboard.jsx` with your Client ID
+
+4. **Start development server**
    ```bash
    npm run dev
    ```
