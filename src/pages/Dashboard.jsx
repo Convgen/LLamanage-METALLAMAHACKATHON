@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
+import { FaHospital, FaBars, FaTimes, FaChartLine, FaSitemap, FaFileAlt, FaComments, FaPlug, FaCog, FaSignOutAlt } from 'react-icons/fa'
 import { authHelpers, dbHelpers, storageHelpers } from '../utils/supabaseClient'
 import { sendChatMessage, processDocumentBackend } from '../utils/backendAI'
 import FlowBuilder from '../components/FlowBuilder'
@@ -14,6 +15,7 @@ function Dashboard() {
   const [activeTab, setActiveTab] = useState('dashboard')
   const [user, setUser] = useState(null)
   const [loading, setLoading] = useState(true)
+  const [sidebarOpen, setSidebarOpen] = useState(false)
   
   const [uploadedFiles, setUploadedFiles] = useState([])
   const [isDragging, setIsDragging] = useState(false)
@@ -42,6 +44,27 @@ function Dashboard() {
         const { user, error } = await authHelpers.getUser()
         if (error || !user) { navigate('/signin'); return }
         setUser(user)
+        
+        // Check for existing Google Calendar token
+        const { session } = await authHelpers.getSession()
+        const savedToken = localStorage.getItem('googleCalendarToken')
+        const currentToken = session?.provider_token || savedToken
+        
+        console.log('Checking for Google Calendar token on mount...')
+        console.log('Session provider_token:', session?.provider_token)
+        console.log('LocalStorage token:', savedToken)
+        
+        if (currentToken) {
+          console.log('Found Google Calendar token, setting as connected')
+          setIntegrations(prev => ({
+            ...prev,
+            googleCalendar: {
+              connected: true,
+              email: user.email,
+              accessToken: currentToken
+            }
+          }))
+        }
         
         const { data: files } = await dbHelpers.getFiles(user.id)
         if (files) {
@@ -82,10 +105,28 @@ function Dashboard() {
     const urlParams = new URLSearchParams(window.location.search)
     if (urlParams.has('code') || urlParams.has('access_token')) {
       authHelpers.getSession().then(({ session }) => {
+        console.log('OAuth callback - Full session:', session)
+        console.log('Provider token:', session?.provider_token)
+        
         if (session?.provider_token) {
+          // Save provider token to state
           setIntegrations(prev => ({
-            ...prev, googleCalendar: { connected: true, email: session.user.email }
+            ...prev, 
+            googleCalendar: { 
+              connected: true, 
+              email: session.user.email,
+              accessToken: session.provider_token // Store token for API calls
+            }
           }))
+          
+          // Also save to localStorage for persistence
+          localStorage.setItem('googleCalendarToken', session.provider_token)
+          
+          // Show success message
+          alert('✅ Google Calendar connected successfully! You can now schedule meetings with AI.')
+        } else {
+          console.error('No provider_token in session after OAuth callback')
+          alert('⚠️ Connected to Google but token not found. Please try again.')
         }
       })
       window.history.replaceState({}, document.title, window.location.pathname)
@@ -235,10 +276,14 @@ function Dashboard() {
     }
     
     try {
+      const googleToken = integrations.googleCalendar?.accessToken
+      console.log('Sending chat message with Google token:', googleToken ? 'Token present (length: ' + googleToken.length + ')' : 'NO TOKEN')
+      
       // Call backend AI with RAG disabled temporarily (embeddings issue)
       const response = await sendChatMessage(inputMessage, { 
         useRAG: false, // Temporarily disabled until we fix HuggingFace embeddings
-        conversationHistory: messages.slice(-5) // Send last 5 messages for context
+        conversationHistory: messages.slice(-5), // Send last 5 messages for context
+        googleAccessToken: googleToken // Pass Google OAuth token for calendar tools
       })
       
       const assistantMessage = { role: 'assistant', content: response.message }
@@ -287,28 +332,69 @@ function Dashboard() {
     return (
       <div className='min-h-screen flex items-center justify-center' style={{ backgroundColor: '#1F1F1F' }}>
         <div className='text-center'>
-          <div className='text-4xl mb-4'>🦙</div>
-          <div className='text-xl' style={{ color: '#75FDA8' }}>Loading...</div>
+          <FaHospital className='text-6xl mb-4 mx-auto animate-pulse' style={{ color: '#75FDA8' }} />
+          <div className='text-xl font-semibold' style={{ color: '#75FDA8' }}>Loading Dashboard...</div>
         </div>
       </div>
     )
   }
 
+  const menuItems = [
+    { id: 'dashboard', icon: FaChartLine, label: 'Dashboard' },
+    { id: 'flowbuilder', icon: FaSitemap, label: 'Flow Builder' },
+    { id: 'files', icon: FaFileAlt, label: 'Files' },
+    { id: 'chat', icon: FaComments, label: 'AI Chat' },
+    { id: 'integrations', icon: FaPlug, label: 'Integrations' },
+    { id: 'settings', icon: FaCog, label: 'Settings' }
+  ]
+
   return (
     <div className='min-h-screen' style={{ backgroundColor: '#1F1F1F' }}>
-      <nav className='shadow-sm' style={{ backgroundColor: '#2D2D2D', borderBottom: '1px solid #27705D' }}>
+      {/* Top Navigation Bar */}
+      <nav className='sticky top-0 z-50 shadow-lg' style={{ backgroundColor: '#2D2D2D', borderBottom: '2px solid #27705D' }}>
         <div className='px-4 sm:px-6 lg:px-8'>
           <div className='flex justify-between items-center h-16'>
-            <div className='flex items-center space-x-8'>
-              <h1 className='text-2xl font-bold' style={{ color: '#75FDA8' }}>🦙 Llamanage</h1>
+            {/* Left: Logo + Mobile Menu Button */}
+            <div className='flex items-center gap-4'>
+              <button
+                onClick={() => setSidebarOpen(!sidebarOpen)}
+                className='lg:hidden p-2 rounded-lg transition-all'
+                style={{ color: '#75FDA8' }}
+              >
+                {sidebarOpen ? <FaTimes className='text-2xl' /> : <FaBars className='text-2xl' />}
+              </button>
+              <div className='flex items-center gap-2'>
+                <FaHospital className='text-2xl sm:text-3xl' style={{ color: '#75FDA8' }} />
+                <h1 className='text-xl sm:text-2xl font-bold' style={{ color: '#75FDA8' }}>Llamanage</h1>
+              </div>
             </div>
-            <div className='flex items-center space-x-4'>
-              <span className='text-sm' style={{ color: '#FFFFFF' }}>{user?.email}</span>
-              <button onClick={handleLogout} className='px-4 py-2 rounded-lg text-sm font-medium transition-all duration-300'
-                style={{ border: '1px solid #27705D', color: '#27705D' }}
-                onMouseEnter={(e) => { e.target.style.backgroundColor = '#27705D'; e.target.style.color = '#FFFFFF' }}
-                onMouseLeave={(e) => { e.target.style.backgroundColor = 'transparent'; e.target.style.color = '#27705D' }}>
-                Logout
+            
+            {/* Right: User Info + Logout */}
+            <div className='flex items-center gap-3 sm:gap-4'>
+              <div className='hidden sm:flex items-center gap-2'>
+                <div className='w-8 h-8 rounded-full flex items-center justify-center text-sm font-bold' 
+                  style={{ backgroundColor: '#75FDA8', color: '#2D2D2D' }}>
+                  {user?.email?.[0].toUpperCase()}
+                </div>
+                <span className='text-sm font-medium hidden md:block' style={{ color: '#FFFFFF' }}>
+                  {user?.email}
+                </span>
+              </div>
+              <button
+                onClick={handleLogout}
+                className='flex items-center gap-2 px-3 sm:px-4 py-2 rounded-lg text-sm font-medium transition-all hover:scale-105'
+                style={{ border: '2px solid #27705D', color: '#75FDA8', backgroundColor: 'transparent' }}
+                onMouseEnter={(e) => {
+                  e.target.style.backgroundColor = '#27705D'
+                  e.target.style.color = '#FFFFFF'
+                }}
+                onMouseLeave={(e) => {
+                  e.target.style.backgroundColor = 'transparent'
+                  e.target.style.color = '#75FDA8'
+                }}
+              >
+                <FaSignOutAlt className='text-base' />
+                <span className='hidden sm:inline'>Logout</span>
               </button>
             </div>
           </div>
@@ -316,60 +402,103 @@ function Dashboard() {
       </nav>
 
       <div className='flex'>
-        <aside className='w-64 min-h-screen shadow-md' style={{ backgroundColor: '#2D2D2D', borderRight: '1px solid #27705D' }}>
-          <nav className='p-4 space-y-2'>
-            {[
-              { id: 'dashboard', icon: '📊', label: 'Dashboard' },
-              { id: 'flowbuilder', icon: '🔄', label: 'Flow Builder' },
-              { id: 'files', icon: '📁', label: 'Files' },
-              { id: 'chat', icon: '💬', label: 'AI Chat' },
-              { id: 'integrations', icon: '🔗', label: 'Integrations' },
-              { id: 'settings', icon: '⚙️', label: 'Settings' }
-            ].map((item) => (
-              <button key={item.id} onClick={() => setActiveTab(item.id)}
-                className='w-full flex items-center space-x-3 px-4 py-3 rounded-lg transition-all duration-200'
-                style={{
-                  backgroundColor: activeTab === item.id ? '#75FDA8' : 'transparent',
-                  color: activeTab === item.id ? '#2D2D2D' : '#E5E7EB'
-                }}
-                onMouseEnter={(e) => {
-                  if (activeTab !== item.id) {
-                    e.currentTarget.style.backgroundColor = '#27705D'
-                    e.currentTarget.style.color = '#FFFFFF'
-                  }
-                }}
-                onMouseLeave={(e) => {
-                  if (activeTab !== item.id) {
-                    e.currentTarget.style.backgroundColor = 'transparent'
-                    e.currentTarget.style.color = '#E5E7EB'
-                  }
-                }}>
-                <span className='text-xl'>{item.icon}</span>
-                <span className='font-medium'>{item.label}</span>
-              </button>
-            ))}
+        {/* Sidebar - Desktop & Mobile Overlay */}
+        <aside
+          className={`
+            fixed lg:sticky top-16 left-0 h-[calc(100vh-4rem)] z-40
+            w-64 shadow-2xl transition-transform duration-300 ease-in-out
+            ${sidebarOpen ? 'translate-x-0' : '-translate-x-full lg:translate-x-0'}
+          `}
+          style={{ backgroundColor: '#2D2D2D', borderRight: '2px solid #27705D' }}
+        >
+          <nav className='p-4 space-y-2 overflow-y-auto h-full'>
+            {menuItems.map((item) => {
+              const Icon = item.icon
+              return (
+                <button
+                  key={item.id}
+                  onClick={() => {
+                    setActiveTab(item.id)
+                    setSidebarOpen(false) // Close mobile menu after selection
+                  }}
+                  className='w-full flex items-center gap-3 px-4 py-3 rounded-lg transition-all duration-200 transform hover:scale-105'
+                  style={{
+                    backgroundColor: activeTab === item.id ? '#75FDA8' : 'transparent',
+                    color: activeTab === item.id ? '#2D2D2D' : '#E5E7EB',
+                    border: activeTab === item.id ? 'none' : '1px solid transparent'
+                  }}
+                  onMouseEnter={(e) => {
+                    if (activeTab !== item.id) {
+                      e.currentTarget.style.backgroundColor = '#27705D'
+                      e.currentTarget.style.color = '#FFFFFF'
+                      e.currentTarget.style.borderColor = '#75FDA8'
+                    }
+                  }}
+                  onMouseLeave={(e) => {
+                    if (activeTab !== item.id) {
+                      e.currentTarget.style.backgroundColor = 'transparent'
+                      e.currentTarget.style.color = '#E5E7EB'
+                      e.currentTarget.style.borderColor = 'transparent'
+                    }
+                  }}
+                >
+                  <Icon className='text-xl' />
+                  <span className='font-medium'>{item.label}</span>
+                </button>
+              )
+            })}
           </nav>
         </aside>
 
-        <main className='flex-1 p-8'>
-          {activeTab === 'dashboard' && (
-            <DashboardOverview uploadedFiles={uploadedFiles} messages={messages} integrations={integrations} />
-          )}
-          {activeTab === 'flowbuilder' && <FlowBuilder userId={user?.id} />}
-          {activeTab === 'files' && (
-            <FilesManager uploadedFiles={uploadedFiles} isDragging={isDragging} businessInfo={businessInfo}
-              onFileUpload={handleFileUpload} onDragOver={handleDragOver} onDragLeave={handleDragLeave}
-              onDrop={handleDrop} onRemoveFile={handleRemoveFile} onInputChange={handleInputChange} onSubmit={handleSubmit} />
-          )}
-          {activeTab === 'chat' && (
-            <ChatInterface messages={messages} inputMessage={inputMessage} isTyping={isTyping}
-              onInputChange={setInputMessage} onSendMessage={handleSendMessage} onSetInputMessage={setInputMessage} />
-          )}
-          {activeTab === 'integrations' && (
-            <IntegrationsManager integrations={integrations} onGoogleCalendarAuth={handleGoogleCalendarAuth}
-              onDisconnectGoogleCalendar={handleDisconnectGoogleCalendar} onIntegrationConnect={handleIntegrationConnect} />
-          )}
-          {activeTab === 'settings' && <SettingsPanel user={user} />}
+        {/* Mobile Overlay */}
+        {sidebarOpen && (
+          <div
+            className='fixed inset-0 bg-black bg-opacity-50 z-30 lg:hidden'
+            onClick={() => setSidebarOpen(false)}
+          />
+        )}
+
+        {/* Main Content */}
+        <main className='flex-1 p-4 sm:p-6 lg:p-8 overflow-x-hidden'>
+          <div className='max-w-7xl mx-auto'>
+            {activeTab === 'dashboard' && (
+              <DashboardOverview uploadedFiles={uploadedFiles} messages={messages} integrations={integrations} />
+            )}
+            {activeTab === 'flowbuilder' && <FlowBuilder userId={user?.id} />}
+            {activeTab === 'files' && (
+              <FilesManager
+                uploadedFiles={uploadedFiles}
+                isDragging={isDragging}
+                businessInfo={businessInfo}
+                onFileUpload={handleFileUpload}
+                onDragOver={handleDragOver}
+                onDragLeave={handleDragLeave}
+                onDrop={handleDrop}
+                onRemoveFile={handleRemoveFile}
+                onInputChange={handleInputChange}
+                onSubmit={handleSubmit}
+              />
+            )}
+            {activeTab === 'chat' && (
+              <ChatInterface
+                messages={messages}
+                inputMessage={inputMessage}
+                isTyping={isTyping}
+                onInputChange={setInputMessage}
+                onSendMessage={handleSendMessage}
+                onSetInputMessage={setInputMessage}
+              />
+            )}
+            {activeTab === 'integrations' && (
+              <IntegrationsManager
+                integrations={integrations}
+                onGoogleCalendarAuth={handleGoogleCalendarAuth}
+                onDisconnectGoogleCalendar={handleDisconnectGoogleCalendar}
+                onIntegrationConnect={handleIntegrationConnect}
+              />
+            )}
+            {activeTab === 'settings' && <SettingsPanel user={user} />}
+          </div>
         </main>
       </div>
     </div>

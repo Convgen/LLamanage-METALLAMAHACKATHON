@@ -19,13 +19,15 @@ const FUNCTIONS_URL = `${SUPABASE_URL}/functions/v1`
  * Send chat message - AI processing happens on backend
  * @param {string} message - User's message
  * @param {Object} options - Chat options
- * @returns {Promise<Object>} AI response with sources
+ * @returns {Promise<Object>} AI response with sources and tools used
  */
 export async function sendChatMessage(message, options = {}) {
   try {
     const {
       conversationHistory = [],
       useRAG = true,
+      enableTools = true, // Enable AI tools by default
+      googleAccessToken = null, // Google OAuth token for calendar access
     } = options
 
     // Get current session token
@@ -33,6 +35,11 @@ export async function sendChatMessage(message, options = {}) {
     if (!session) {
       throw new Error('Not authenticated')
     }
+
+    // Try to get Google OAuth token from session if not provided
+    const googleToken = googleAccessToken || session.provider_token
+    
+    console.log('backendAI.js - Sending request with Google token:', googleToken ? 'Token present (length: ' + googleToken.length + ')' : 'NO TOKEN')
 
     // Call backend Edge Function
     const response = await fetch(`${FUNCTIONS_URL}/chat-completion`, {
@@ -45,6 +52,8 @@ export async function sendChatMessage(message, options = {}) {
         message,
         conversationHistory,
         useRAG,
+        enableTools, // Pass tools flag to backend
+        googleAccessToken: googleToken, // Pass Google OAuth token to backend
       }),
     })
 
@@ -63,6 +72,7 @@ export async function sendChatMessage(message, options = {}) {
       message: data.message,
       sources: data.sources || [],
       hasContext: data.hasContext || false,
+      toolsUsed: data.toolsUsed || [], // Tools that were used by AI
     }
 
   } catch (error) {
