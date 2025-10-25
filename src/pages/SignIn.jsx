@@ -1,5 +1,6 @@
 import { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
+import { authHelpers } from '../utils/supabaseClient'
 
 function SignIn() {
   const navigate = useNavigate()
@@ -7,6 +8,7 @@ function SignIn() {
     email: '',
     password: ''
   })
+  const [loading, setLoading] = useState(false)
 
   const handleInputChange = (e) => {
     setFormData({
@@ -15,15 +17,26 @@ function SignIn() {
     })
   }
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault()
-    // Placeholder authentication - replace with actual auth logic
-    if (formData.email && formData.password) {
-      localStorage.setItem('isAuthenticated', 'true')
-      localStorage.setItem('userEmail', formData.email)
-      navigate('/dashboard')
-    } else {
-      alert('Please fill in all fields')
+    setLoading(true)
+    
+    try {
+      const { data, error } = await authHelpers.signIn(formData.email, formData.password)
+      
+      if (error) {
+        alert(`Sign in failed: ${error.message}`)
+        setLoading(false)
+        return
+      }
+      
+      if (data.user) {
+        navigate('/dashboard')
+      }
+    } catch (error) {
+      console.error('Sign in error:', error)
+      alert('An error occurred during sign in')
+      setLoading(false)
     }
   }
 
@@ -101,22 +114,27 @@ function SignIn() {
 
             <button
               type="submit"
+              disabled={loading}
               className="w-full px-6 py-3 rounded-lg font-semibold transition-all duration-300"
-              style={{ backgroundColor: '#75FDA8', color: '#2D2D2D' }}
+              style={{ backgroundColor: '#75FDA8', color: '#2D2D2D', opacity: loading ? 0.7 : 1 }}
               onMouseEnter={(e) => {
-                e.target.style.backgroundColor = '#27705D'
-                e.target.style.color = '#FFFFFF'
-                e.target.style.transform = 'translateY(-2px)'
-                e.target.style.boxShadow = '0 10px 25px rgba(0,0,0,0.2)'
+                if (!loading) {
+                  e.target.style.backgroundColor = '#27705D'
+                  e.target.style.color = '#FFFFFF'
+                  e.target.style.transform = 'translateY(-2px)'
+                  e.target.style.boxShadow = '0 10px 25px rgba(0,0,0,0.2)'
+                }
               }}
               onMouseLeave={(e) => {
-                e.target.style.backgroundColor = '#75FDA8'
-                e.target.style.color = '#2D2D2D'
-                e.target.style.transform = 'translateY(0)'
-                e.target.style.boxShadow = 'none'
+                if (!loading) {
+                  e.target.style.backgroundColor = '#75FDA8'
+                  e.target.style.color = '#2D2D2D'
+                  e.target.style.transform = 'translateY(0)'
+                  e.target.style.boxShadow = 'none'
+                }
               }}
             >
-              Sign In
+              {loading ? 'Signing in...' : 'Sign In'}
             </button>
           </form>
 
@@ -140,7 +158,10 @@ function SignIn() {
         <div className="text-center mt-6">
           <button
             onClick={() => navigate('/')}
-            className="text-white hover:text-[#75FDA8] transition-colors duration-200"
+            className="text-white transition-colors duration-200"
+            style={{ color: '#FFFFFF' }}
+            onMouseEnter={(e) => e.target.style.color = '#75FDA8'}
+            onMouseLeave={(e) => e.target.style.color = '#FFFFFF'}
           >
             ← Back to Home
           </button>

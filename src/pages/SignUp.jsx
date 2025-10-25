@@ -1,5 +1,6 @@
 import { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
+import { authHelpers } from '../utils/supabaseClient'
 
 function SignUp() {
   const navigate = useNavigate()
@@ -9,6 +10,7 @@ function SignUp() {
     password: '',
     confirmPassword: ''
   })
+  const [loading, setLoading] = useState(false)
 
   const handleInputChange = (e) => {
     setFormData({
@@ -17,7 +19,7 @@ function SignUp() {
     })
   }
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault()
     
     if (!formData.companyName || !formData.email || !formData.password || !formData.confirmPassword) {
@@ -30,11 +32,31 @@ function SignUp() {
       return
     }
     
-    // Placeholder registration - replace with actual auth logic
-    localStorage.setItem('isAuthenticated', 'true')
-    localStorage.setItem('userEmail', formData.email)
-    localStorage.setItem('companyName', formData.companyName)
-    navigate('/dashboard')
+    if (formData.password.length < 6) {
+      alert('Password must be at least 6 characters')
+      return
+    }
+    
+    setLoading(true)
+    
+    try {
+      const { data, error} = await authHelpers.signUp(formData.email, formData.password, formData.companyName)
+      
+      if (error) {
+        alert(`Sign up failed: ${error.message}`)
+        setLoading(false)
+        return
+      }
+      
+      if (data.user) {
+        alert('Account created successfully! Please check your email to verify your account.')
+        navigate('/signin')
+      }
+    } catch (error) {
+      console.error('Sign up error:', error)
+      alert('An error occurred during sign up')
+      setLoading(false)
+    }
   }
 
   return (
@@ -138,22 +160,27 @@ function SignUp() {
 
             <button
               type="submit"
+              disabled={loading}
               className="w-full px-6 py-3 rounded-lg font-semibold transition-all duration-300"
-              style={{ backgroundColor: '#75FDA8', color: '#2D2D2D' }}
+              style={{ backgroundColor: '#75FDA8', color: '#2D2D2D', opacity: loading ? 0.7 : 1 }}
               onMouseEnter={(e) => {
-                e.target.style.backgroundColor = '#27705D'
-                e.target.style.color = '#FFFFFF'
-                e.target.style.transform = 'translateY(-2px)'
-                e.target.style.boxShadow = '0 10px 25px rgba(0,0,0,0.2)'
+                if (!loading) {
+                  e.target.style.backgroundColor = '#27705D'
+                  e.target.style.color = '#FFFFFF'
+                  e.target.style.transform = 'translateY(-2px)'
+                  e.target.style.boxShadow = '0 10px 25px rgba(0,0,0,0.2)'
+                }
               }}
               onMouseLeave={(e) => {
-                e.target.style.backgroundColor = '#75FDA8'
-                e.target.style.color = '#2D2D2D'
-                e.target.style.transform = 'translateY(0)'
-                e.target.style.boxShadow = 'none'
+                if (!loading) {
+                  e.target.style.backgroundColor = '#75FDA8'
+                  e.target.style.color = '#2D2D2D'
+                  e.target.style.transform = 'translateY(0)'
+                  e.target.style.boxShadow = 'none'
+                }
               }}
             >
-              Create Account
+              {loading ? 'Creating account...' : 'Create Account'}
             </button>
           </form>
 
