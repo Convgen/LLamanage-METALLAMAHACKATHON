@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { authHelpers, dbHelpers, storageHelpers } from '../utils/supabaseClient'
+import { sendChatMessage, processDocumentBackend } from '../utils/backendAI'
 import FlowBuilder from '../components/FlowBuilder'
 import DashboardOverview from '../components/DashboardOverview'
 import FilesManager from '../components/FilesManager'
@@ -98,13 +99,18 @@ function Dashboard() {
     const files = Array.from(e.target.files)
     for (const file of files) {
       try {
+        // Upload file to storage
         const { data: uploadData, error: uploadError } = await storageHelpers.uploadFile(user.id, file)
         if (uploadError) throw uploadError
+        
+        // Create file record in database
         const { data: fileRecord, error: dbError } = await dbHelpers.createFileRecord(user.id, {
           fileName: uploadData.fileName, originalName: uploadData.originalName,
           fileSize: uploadData.fileSize, fileType: uploadData.fileType, storagePath: uploadData.path
         })
         if (dbError) throw dbError
+        
+        // Add to UI
         setUploadedFiles(prev => [...prev, {
           id: fileRecord.id, name: fileRecord.original_name,
           size: (fileRecord.file_size / 1024).toFixed(2) + ' KB',
@@ -112,6 +118,17 @@ function Dashboard() {
           uploadedAt: new Date(fileRecord.created_at).toLocaleString(),
           storagePath: fileRecord.storage_path
         }])
+        
+        // Process document with backend AI (generate embeddings)
+        try {
+          console.log('Processing document with AI backend...')
+          const result = await processDocumentBackend(fileRecord.id, fileRecord.original_name, fileRecord.storage_path)
+          console.log('Document processed:', result)
+          alert(`✅ ${file.name} processed successfully! ${result.chunksProcessed} chunks indexed for AI search.`)
+        } catch (aiError) {
+          console.error('AI processing error:', aiError)
+          alert(`⚠️ ${file.name} uploaded but AI processing failed. You can retry later.`)
+        }
       } catch (error) {
         console.error('File upload error:', error)
         alert('Failed to upload ' + file.name)
@@ -128,13 +145,18 @@ function Dashboard() {
     const files = Array.from(e.dataTransfer.files)
     for (const file of files) {
       try {
+        // Upload file to storage
         const { data: uploadData, error: uploadError } = await storageHelpers.uploadFile(user.id, file)
         if (uploadError) throw uploadError
+        
+        // Create file record in database
         const { data: fileRecord, error: dbError } = await dbHelpers.createFileRecord(user.id, {
           fileName: uploadData.fileName, originalName: uploadData.originalName,
           fileSize: uploadData.fileSize, fileType: uploadData.fileType, storagePath: uploadData.path
         })
         if (dbError) throw dbError
+        
+        // Add to UI
         setUploadedFiles(prev => [...prev, {
           id: fileRecord.id, name: fileRecord.original_name,
           size: (fileRecord.file_size / 1024).toFixed(2) + ' KB',
@@ -142,6 +164,17 @@ function Dashboard() {
           uploadedAt: new Date(fileRecord.created_at).toLocaleString(),
           storagePath: fileRecord.storage_path
         }])
+        
+        // Process document with backend AI (generate embeddings)
+        try {
+          console.log('Processing document with AI backend...')
+          const result = await processDocumentBackend(fileRecord.id, fileRecord.original_name, fileRecord.storage_path)
+          console.log('Document processed:', result)
+          alert(`✅ ${file.name} processed successfully! ${result.chunksProcessed} chunks indexed for AI search.`)
+        } catch (aiError) {
+          console.error('AI processing error:', aiError)
+          alert(`⚠️ ${file.name} uploaded but AI processing failed. You can retry later.`)
+        }
       } catch (error) {
         console.error('File upload error:', error)
         alert('Failed to upload ' + file.name)
@@ -188,26 +221,45 @@ function Dashboard() {
   
   const handleSendMessage = async () => {
     if (!inputMessage.trim() || !user) return
+    
     const userMessage = { role: 'user', content: inputMessage }
     setMessages([...messages, userMessage])
     setInputMessage('')
     setIsTyping(true)
-    try { await dbHelpers.createChatMessage(user.id, inputMessage, 'user') }
-    catch (error) { console.error('Failed to save user message:', error) }
-    setTimeout(async () => {
-      const responses = [
-        'I would be happy to help you with that! Based on your business information, I can assist with customer inquiries.',
-        'That is a great question! Let me check our knowledge base for the most accurate answer.',
-        'I understand your concern. Here is what I found in our system...',
-        'Thank you for reaching out! I can help you with scheduling, FAQs, and general inquiries.',
-        'Based on the documents you have uploaded, here is what I can tell you...'
-      ]
-      const randomResponse = responses[Math.floor(Math.random() * responses.length)]
-      setMessages(prev => [...prev, { role: 'assistant', content: randomResponse }])
+    
+    // Save user message to database
+    try { 
+      await dbHelpers.createChatMessage(user.id, inputMessage, 'user') 
+    } catch (error) { 
+      console.error('Failed to save user message:', error) 
+    }
+    
+    try {
+      // Call backend AI with RAG disabled temporarily (embeddings issue)
+      const response = await sendChatMessage(inputMessage, { 
+        useRAG: false, // Temporarily disabled until we fix HuggingFace embeddings
+        conversationHistory: messages.slice(-5) // Send last 5 messages for context
+      })
+      
+      const assistantMessage = { role: 'assistant', content: response.message }
+      setMessages(prev => [...prev, assistantMessage])
       setIsTyping(false)
-      try { await dbHelpers.createChatMessage(user.id, randomResponse, 'assistant') }
-      catch (error) { console.error('Failed to save assistant message:', error) }
-    }, 1500)
+      
+      // Save assistant message to database
+      try { 
+        await dbHelpers.createChatMessage(user.id, response.message, 'assistant') 
+      } catch (error) { 
+        console.error('Failed to save assistant message:', error) 
+      }
+    } catch (error) {
+      console.error('AI chat error:', error)
+      const errorMessage = { 
+        role: 'assistant', 
+        content: 'Sorry, I encountered an error. Please try again.' 
+      }
+      setMessages(prev => [...prev, errorMessage])
+      setIsTyping(false)
+    }
   }
 
   const handleGoogleCalendarAuth = async () => {
