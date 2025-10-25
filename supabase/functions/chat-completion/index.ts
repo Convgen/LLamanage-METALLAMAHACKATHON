@@ -192,8 +192,13 @@ async function generateChat(
     const finalResponse = await callOpenRouter(messages, tools)
     console.log('Final response:', finalResponse)
     
+    // Ensure content is a string
+    const finalContent = typeof finalResponse.content === 'string'
+      ? finalResponse.content
+      : (finalResponse.content || JSON.stringify(finalResponse))
+    
     return {
-      content: finalResponse.content || finalResponse,
+      content: finalContent,
       toolsUsed: toolResults
     }
   }
@@ -242,8 +247,13 @@ async function generateChat(
       const finalResponse = await callOpenRouter(messages, undefined) // No tools on final call
       console.log('Final response after text-based tool:', finalResponse)
       
+      // Ensure content is a string
+      const finalContent = typeof finalResponse.content === 'string'
+        ? finalResponse.content
+        : (finalResponse.content || JSON.stringify(finalResponse))
+      
       return {
-        content: finalResponse.content || finalResponse,
+        content: finalContent,
         toolsUsed: [{ toolName: functionName, result }]
       }
     }
@@ -251,8 +261,13 @@ async function generateChat(
   
   console.log('No tools used, returning direct response')
   // No tools used, return content directly
+  // Ensure we always return a string, not an object
+  const messageContent = typeof response.content === 'string' 
+    ? response.content 
+    : (response.content || JSON.stringify(response))
+  
   return {
-    content: response.content || response,
+    content: messageContent,
     toolsUsed: []
   }
 }
