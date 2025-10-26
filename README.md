@@ -43,18 +43,6 @@
 
 ---
 
-## 🎬 Demo
-
-<div align="center">
-
-🔗 **[Live Demo](http://localhost:5173)** | 📹 **[Video Demo](#)** | 📚 **[Documentation](#-documentation)**
-
-> **Quick Start**: Sign up with any email and explore all healthcare features!
-
-</div>
-
----
-
 ## � Screenshots
 
 <div align="center">
@@ -81,13 +69,13 @@
 
 ---
 
-## �📖 Table of Contents
+##  Table of Contents
 
 <details>
 <summary>Click to expand</summary>
 
 - [Overview](#-overview)
-- [Demo](#-demo)
+- [Screenshots](#-screenshots)
 - [Features](#-features)
 - [Use Cases](#-use-cases)
 - [Tech Stack](#-tech-stack)
