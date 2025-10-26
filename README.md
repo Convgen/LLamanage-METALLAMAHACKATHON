@@ -247,9 +247,9 @@ Build **medical consultation flows** with zero code using our drag-and-drop edit
 | Technology | Purpose |
 |------------|---------|
 | **OpenRouter** | LLM API access (Llama 3.3-70B) |
-| **HuggingFace** | Text embeddings (sentence-transformers/all-MiniLM-L6-v2) |
+| **HuggingFace** | Text embeddings (sentence-transformers/all-MiniLM-L6-v2) + tts/stt (parler-tts) |
 | **Daily.co** | WebRTC voice/video calls with transcription |
-| **ElevenLabs** | Multilingual text-to-speech (11 voices, 50+ languages) |
+
 
 ### Document Processing
 | Technology | Purpose |
