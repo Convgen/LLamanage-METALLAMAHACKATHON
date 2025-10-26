@@ -396,6 +396,7 @@ llamanage/
 │   │   ├── FlowBuilder.jsx      # Visual flow editor
 │   │   ├── IntegrationsManager.jsx
 │   │   └── SettingsPanel.jsx
+│   │   └── AIConfiguration.jsx 
 │   ├── pages/                   # Route pages
 │   │   ├── Dashboard.jsx        # Main facility dashboard
 │   │   ├── LandingPage.jsx      # Public landing page
