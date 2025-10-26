@@ -249,6 +249,7 @@ Build **medical consultation flows** with zero code using our drag-and-drop edit
 | **OpenRouter** | LLM API access (Llama 3.3-70B) |
 | **HuggingFace** | Text embeddings (sentence-transformers/all-MiniLM-L6-v2) + tts/stt (parler-tts) |
 | **Daily.co** | WebRTC voice/video calls with transcription |
+| **Ultravox** | Llama-based open source tts + stt communication model |
 
 
 ### Document Processing
