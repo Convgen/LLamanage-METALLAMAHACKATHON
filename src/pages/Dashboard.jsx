@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { FaHospital, FaBars, FaTimes, FaChartLine, FaSitemap, FaFileAlt, FaComments, FaPlug, FaCog, FaSignOutAlt } from 'react-icons/fa'
+import { FaBars, FaTimes, FaChartLine, FaSitemap, FaFileAlt, FaComments, FaPlug, FaCog, FaSignOutAlt, FaBrain } from 'react-icons/fa'
 import { authHelpers, dbHelpers, storageHelpers } from '../utils/supabaseClient'
 import { sendChatMessage, processDocumentBackend } from '../utils/backendAI'
 import FlowBuilder from '../components/FlowBuilder'
@@ -9,6 +9,7 @@ import FilesManager from '../components/FilesManager'
 import ChatInterface from '../components/ChatInterface'
 import IntegrationsManager from '../components/IntegrationsManager'
 import SettingsPanel from '../components/SettingsPanel'
+import AIConfiguration from '../components/AIConfiguration'
 
 function Dashboard() {
   const navigate = useNavigate()
@@ -165,7 +166,7 @@ function Dashboard() {
           console.log('Processing document with AI backend...')
           const result = await processDocumentBackend(fileRecord.id, fileRecord.original_name, fileRecord.storage_path)
           console.log('Document processed:', result)
-          alert(`✅ ${file.name} processed successfully! ${result.chunksProcessed} chunks indexed for AI search.`)
+          alert(`✅ ${file.name} processed successfully!`)
         } catch (aiError) {
           console.error('AI processing error:', aiError)
           alert(`⚠️ ${file.name} uploaded but AI processing failed. You can retry later.`)
@@ -332,7 +333,11 @@ function Dashboard() {
     return (
       <div className='min-h-screen flex items-center justify-center' style={{ backgroundColor: '#1F1F1F' }}>
         <div className='text-center'>
-          <FaHospital className='text-6xl mb-4 mx-auto animate-pulse' style={{ color: '#75FDA8' }} />
+          <img 
+            src="/light_png.png" 
+            alt="Llamanage Logo" 
+            className="h-24 w-auto mb-4 mx-auto animate-pulse"
+          />
           <div className='text-xl font-semibold' style={{ color: '#75FDA8' }}>Loading Dashboard...</div>
         </div>
       </div>
@@ -344,6 +349,7 @@ function Dashboard() {
     { id: 'flowbuilder', icon: FaSitemap, label: 'Flow Builder' },
     { id: 'files', icon: FaFileAlt, label: 'Files' },
     { id: 'chat', icon: FaComments, label: 'AI Chat' },
+    { id: 'ai-config', icon: FaBrain, label: 'AI Configuration' },
     { id: 'integrations', icon: FaPlug, label: 'Integrations' },
     { id: 'settings', icon: FaCog, label: 'Settings' }
   ]
@@ -363,8 +369,12 @@ function Dashboard() {
               >
                 {sidebarOpen ? <FaTimes className='text-2xl' /> : <FaBars className='text-2xl' />}
               </button>
-              <div className='flex items-center gap-2'>
-                <FaHospital className='text-2xl sm:text-3xl' style={{ color: '#75FDA8' }} />
+              <div className='flex items-center gap-3'>
+                <img 
+                  src="/light_png.png" 
+                  alt="Llamanage Logo" 
+                  className="h-8 sm:h-10 w-auto"
+                />
                 <h1 className='text-xl sm:text-2xl font-bold' style={{ color: '#75FDA8' }}>Llamanage</h1>
               </div>
             </div>
@@ -489,6 +499,9 @@ function Dashboard() {
                 onSetInputMessage={setInputMessage}
               />
             )}
+            {activeTab === 'ai-config' && (
+              <AIConfiguration userId={user?.id} />
+            )}
             {activeTab === 'integrations' && (
               <IntegrationsManager
                 integrations={integrations}
@@ -497,12 +510,20 @@ function Dashboard() {
                 onIntegrationConnect={handleIntegrationConnect}
               />
             )}
-            {activeTab === 'settings' && <SettingsPanel user={user} />}
+      
+      
+      {activeTab === 'settings' && (
+        <SettingsPanel user={user} />
+      )}
           </div>
         </main>
       </div>
     </div>
   )
 }
+
+
+  
+
 
 export default Dashboard

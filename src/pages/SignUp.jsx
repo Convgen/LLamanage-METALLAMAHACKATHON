@@ -66,12 +66,18 @@ function SignUp() {
         <div className="text-center mb-8">
           <button 
             onClick={() => navigate('/')}
-            className="text-4xl font-bold transition-colors duration-300 inline-block"
-            style={{ color: '#75FDA8' }}
-            onMouseEnter={(e) => e.target.style.transform = 'scale(1.05)'}
-            onMouseLeave={(e) => e.target.style.transform = 'scale(1)'}
+            className="flex flex-col items-center justify-center mx-auto gap-2 transition-all duration-300"
+            onMouseEnter={(e) => e.currentTarget.style.transform = 'scale(1.05)'}
+            onMouseLeave={(e) => e.currentTarget.style.transform = 'scale(1)'}
           >
-            🦙 Llamanage
+            <img 
+              src="/light_png.png" 
+              alt="Llamanage Logo" 
+              className="h-16 w-auto"
+            />
+            <span className="text-3xl font-bold" style={{ color: '#75FDA8' }}>
+              Llamanage
+            </span>
           </button>
           <p className="text-gray-200 mt-2">Create your business account</p>
         </div>

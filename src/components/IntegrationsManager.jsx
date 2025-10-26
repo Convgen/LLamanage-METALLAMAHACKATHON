@@ -85,7 +85,7 @@ function IntegrationsManager({ integrations, onGoogleCalendarAuth, onDisconnectG
       </h3>
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
         {[
-          { name: 'Twilio SMS', icon: '📱', status: 'coming-soon', description: 'Send SMS notifications' },
+          { name: 'Twilio SMS', icon: '📱', status: 'available', description: 'Send SMS notifications' },
           { name: 'Slack', icon: '💬', status: 'available', description: 'Connect to Slack workspace' },
           { name: 'Discord', icon: '🎮', status: 'available', description: 'Integrate with Discord server' },
           { name: 'Zapier', icon: '⚡', status: 'available', description: 'Connect 5000+ apps' },

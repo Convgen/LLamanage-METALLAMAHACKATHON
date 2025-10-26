@@ -258,6 +258,48 @@ export const dbHelpers = {
       filter_user_id: userId
     })
     return { data, error }
+  },
+
+  // AI Settings operations
+  getAISettings: async (userId) => {
+    const { data, error } = await supabase
+      .from('ai_settings')
+      .select('*')
+      .eq('user_id', userId)
+      .single()
+    return { data, error }
+  },
+
+  updateAISettings: async (userId, settings) => {
+    const { data, error } = await supabase
+      .from('ai_settings')
+      .upsert({
+        user_id: userId,
+        system_prompt: settings.systemPrompt,
+        personality: settings.personality,
+        temperature: settings.temperature,
+        max_tokens: settings.maxTokens,
+        voice_id: settings.voiceId,
+        language: settings.language,
+        response_style: settings.responseStyle,
+        updated_at: new Date().toISOString()
+      }, {
+        onConflict: 'user_id'
+      })
+      .select()
+      .single()
+    return { data, error }
+  },
+
+  createDefaultAISettings: async (userId) => {
+    const { data, error } = await supabase
+      .from('ai_settings')
+      .insert({
+        user_id: userId
+      })
+      .select()
+      .single()
+    return { data, error }
   }
 }
 

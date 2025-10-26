@@ -1,8 +1,28 @@
 {
-  "name": "frontend",
+  "name": "llamanage",
+  "version": "1.0.0",
+  "description": "AI-Powered Health Tourism Assistant Platform - B2B SaaS for healthcare facilities to create intelligent patient support agents",
   "private": true,
-  "version": "0.0.0",
   "type": "module",
+  "author": "Certifi Team (Abdelrahman Elmorsi, Nabil, Yasir, Abdullah Mazloum)",
+  "license": "UNLICENSED",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/Convgen/LLamanage-METALLAMAHACKATHON/"
+  },
+  "keywords": [
+    "health-tourism",
+    "medical-tourism",
+    "ai-assistant",
+    "healthcare",
+    "chatbot",
+    "voice-ai",
+    "patient-support",
+    "react",
+    "supabase",
+    "elevenlabs",
+    "daily-co"
+  ],
   "scripts": {
     "dev": "vite",
     "build": "vite build",

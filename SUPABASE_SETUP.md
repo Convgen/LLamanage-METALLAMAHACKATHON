@@ -107,9 +107,38 @@ CREATE TABLE document_embeddings (
   user_id UUID REFERENCES auth.users(id) NOT NULL,
   file_id UUID REFERENCES files(id) ON DELETE CASCADE,
   content TEXT NOT NULL,
-  embedding vector(1536), -- OpenAI ada-002 embedding size
+  embedding vector(384), -- HuggingFace all-MiniLM-L6-v2 embedding size
   metadata JSONB,
   created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
+);
+
+-- AI Settings table (for voice and personality configuration)
+CREATE TABLE ai_settings (
+  id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
+  user_id UUID REFERENCES auth.users(id) NOT NULL UNIQUE,
+  system_prompt TEXT DEFAULT 'You are a helpful AI assistant for a health tourism medical facility. You help international patients with questions about medical procedures, appointments, travel arrangements, and post-treatment care. Be professional, empathetic, and informative while maintaining HIPAA compliance.',
+  personality TEXT DEFAULT 'Professional Medical',
+  temperature DECIMAL DEFAULT 0.7,
+  max_tokens INTEGER DEFAULT 500,
+  voice_id TEXT DEFAULT 'EXAVITQu4vr4xnSDxMaL',
+  language TEXT DEFAULT 'English',
+  response_style TEXT DEFAULT 'Balanced',
+  created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
+  updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
+);
+
+-- Voice call settings table
+CREATE TABLE voice_call_settings (
+  id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
+  user_id UUID REFERENCES auth.users(id) NOT NULL UNIQUE,
+  "welcomeMessage" TEXT DEFAULT 'Hello! Welcome to our medical facility. How can I help you today?',
+  "voiceId" TEXT DEFAULT 'EXAVITQu4vr4xnSDxMaL',
+  "businessHours" JSONB DEFAULT '{"enabled": true, "schedule": {"monday": {"open": "09:00", "close": "17:00"}, "tuesday": {"open": "09:00", "close": "17:00"}, "wednesday": {"open": "09:00", "close": "17:00"}, "thursday": {"open": "09:00", "close": "17:00"}, "friday": {"open": "09:00", "close": "17:00"}, "saturday": {"open": "10:00", "close": "14:00"}, "sunday": {"open": null, "close": null}}}'::JSONB,
+  "afterHoursMessage" TEXT DEFAULT 'Thank you for calling. We are currently closed. Please call back during business hours or leave a message.',
+  language TEXT DEFAULT 'en',
+  enabled BOOLEAN DEFAULT true,
+  created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
+  updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
 );
 
 -- ============================================
@@ -133,6 +162,8 @@ ALTER TABLE files ENABLE ROW LEVEL SECURITY;
 ALTER TABLE chat_messages ENABLE ROW LEVEL SECURITY;
 ALTER TABLE business_info ENABLE ROW LEVEL SECURITY;
 ALTER TABLE document_embeddings ENABLE ROW LEVEL SECURITY;
+ALTER TABLE ai_settings ENABLE ROW LEVEL SECURITY;
+ALTER TABLE voice_call_settings ENABLE ROW LEVEL SECURITY;
 
 -- Profiles policies
 CREATE POLICY "Users can view own profile" ON profiles
@@ -180,6 +211,26 @@ CREATE POLICY "Users can view own embeddings" ON document_embeddings
 CREATE POLICY "Users can create own embeddings" ON document_embeddings
   FOR INSERT WITH CHECK (auth.uid() = user_id);
 CREATE POLICY "Users can delete own embeddings" ON document_embeddings
+  FOR DELETE USING (auth.uid() = user_id);
+
+-- AI Settings policies
+CREATE POLICY "Users can view own AI settings" ON ai_settings
+  FOR SELECT USING (auth.uid() = user_id);
+CREATE POLICY "Users can insert own AI settings" ON ai_settings
+  FOR INSERT WITH CHECK (auth.uid() = user_id);
+CREATE POLICY "Users can update own AI settings" ON ai_settings
+  FOR UPDATE USING (auth.uid() = user_id);
+CREATE POLICY "Users can delete own AI settings" ON ai_settings
+  FOR DELETE USING (auth.uid() = user_id);
+
+-- Voice call settings policies
+CREATE POLICY "Users can view own voice settings" ON voice_call_settings
+  FOR SELECT USING (auth.uid() = user_id);
+CREATE POLICY "Users can insert own voice settings" ON voice_call_settings
+  FOR INSERT WITH CHECK (auth.uid() = user_id);
+CREATE POLICY "Users can update own voice settings" ON voice_call_settings
+  FOR UPDATE USING (auth.uid() = user_id);
+CREATE POLICY "Users can delete own voice settings" ON voice_call_settings
   FOR DELETE USING (auth.uid() = user_id);
 
 -- ============================================

@@ -1,6 +1,5 @@
 import { useNavigate } from 'react-router-dom'
 import {
-  FaHospital,
   FaRobot,
   FaUserMd,
   FaCalendarCheck,
@@ -166,8 +165,12 @@ function LandingPage() {
       <nav className="border-b-2 sticky top-0 z-50" style={{ borderColor: '#27705D', backgroundColor: '#2D2D2D' }}>
         <div className="container mx-auto px-4 sm:px-6 lg:px-8 py-4">
           <div className="flex justify-between items-center">
-            <div className="flex items-center gap-2">
-              <FaHospital className="text-2xl sm:text-3xl" style={{ color: '#75FDA8' }} />
+            <div className="flex items-center gap-3">
+              <img 
+                src="/light_png.png" 
+                alt="Llamanage Logo" 
+                className="h-8 sm:h-10 w-auto"
+              />
               <span className="text-xl sm:text-2xl font-bold">Llamanage</span>
             </div>
             <div className="flex gap-2 sm:gap-4">
@@ -463,8 +466,12 @@ function LandingPage() {
         <div className="container mx-auto px-4 sm:px-6 lg:px-8">
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-8 mb-8">
             <div>
-              <div className="flex items-center gap-2 mb-4">
-                <FaHospital className="text-2xl" style={{ color: '#75FDA8' }} />
+              <div className="flex items-center gap-3 mb-4">
+                <img 
+                  src="/light_png.png" 
+                  alt="Llamanage Logo" 
+                  className="h-8 w-auto"
+                />
                 <span className="text-xl font-bold">Llamanage</span>
               </div>
               <p className="text-sm sm:text-base" style={{ color: '#B8B8B8' }}>
