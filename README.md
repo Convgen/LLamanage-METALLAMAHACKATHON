@@ -428,17 +428,6 @@ llamanage/
 - **[JUDGE_QUICKSTART.md](./JUDGE_QUICKSTART.md)** - 5-minute quick start
 - **[QUICK_REFERENCE.md](./QUICK_REFERENCE.md)** - API quick reference
 
-### Feature Guides
-- **[FLOW_BUILDER.md](./extra_files/FLOW_BUILDER.md)** - Flow builder documentation
-- **[GOOGLE_CALENDAR_SETUP.md](./extra_files/GOOGLE_CALENDAR_SETUP.md)** - Calendar integration
-
-### Architecture
-- **[PROJECT_SUMMARY.md](./extra_files/PROJECT_SUMMARY.md)** - Project overview
-- **[ARCHITECTURE.md](./extra_files/ARCHITECTURE.md)** - System architecture
-
-### Hackathon Materials
-- **[HACKATHON_SUBMISSION.md](./HACKATHON_SUBMISSION.md)** - Complete submission details
-- **[HACKATHON_CHECKLIST.md](./extra_files/HACKATHON_CHECKLIST.md)** - Pre-submission checklist
 
 ---
 

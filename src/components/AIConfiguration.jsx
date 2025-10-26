@@ -364,6 +364,75 @@ function AIConfiguration({ userId }) {
           </div>
         </div>
       </div>
+
+      {/* Embed Widget Instructions */}
+      <div className="p-6 rounded-lg" style={{ backgroundColor: '#1F1F1F' }}>
+        <h3 className="text-xl font-semibold mb-4" style={{ color: '#FFFFFF' }}>
+          📱 Embed Chat Widget on Your Website
+        </h3>
+        <p className="mb-4" style={{ color: '#B0B0B0' }}>
+          Add this code snippet to your website to embed the AI chat widget. Patients can start conversations directly from your site.
+        </p>
+        
+        <div className="space-y-4">
+          <div>
+            <label className="block mb-2 font-medium" style={{ color: '#FFFFFF' }}>
+              HTML Embed Code
+            </label>
+            <div 
+              className="p-4 rounded-lg font-mono text-sm overflow-x-auto"
+              style={{ backgroundColor: '#2D2D2D', color: '#75FDA8' }}
+            >
+              <pre>{`<!-- Add this to your website's <body> tag -->
+<div id="llamanage-chat"></div>
+<script>
+  (function() {
+    const widget = document.createElement('iframe');
+    widget.src = 'https://llamanage.daily.co/widget/${userId || 'YOUR_USER_ID'}';
+    widget.style.cssText = 'position:fixed;bottom:20px;right:20px;width:400px;height:600px;border:none;border-radius:12px;box-shadow:0 4px 20px rgba(0,0,0,0.3);z-index:9999;';
+    document.getElementById('llamanage-chat').appendChild(widget);
+  })();
+</script>`}</pre>
+            </div>
+            <p className="text-sm mt-2" style={{ color: '#B0B0B0' }}>
+              Copy this code and paste it before the closing {'</body>'} tag on your website
+            </p>
+          </div>
+
+          <div>
+            <label className="block mb-2 font-medium" style={{ color: '#FFFFFF' }}>
+              🎙️ Voice Call Room (Daily.co)
+            </label>
+            <div 
+              className="p-3 rounded-lg font-mono text-sm break-all"
+              style={{ backgroundColor: '#2D2D2D', color: '#FFFFFF' }}
+            >
+              {`https://${userId || 'your-facility'}.daily.co/[room-name]`}
+            </div>
+            <p className="text-sm mt-2" style={{ color: '#B0B0B0' }}>
+              Voice call rooms are automatically created via Daily.co API when patients request consultations. Each room URL is dynamically generated and sent to the patient. Example: <code style={{ color: '#75FDA8' }}>https://llamanage.daily.co/patient-consultation-abc123</code>
+            </p>
+          </div>
+
+          <div className="flex items-start gap-3 p-4 rounded-lg" style={{ backgroundColor: '#2D2D2D' }}>
+            <div style={{ color: '#75FDA8' }}>💡</div>
+            <div>
+              <div className="font-medium mb-1" style={{ color: '#FFFFFF' }}>
+                How Voice Calls Work
+              </div>
+              <div className="text-sm space-y-1" style={{ color: '#B0B0B0' }}>
+                <div>• Patient requests voice consultation from chat</div>
+                <div>• Backend calls Daily.co API with <code style={{ color: '#75FDA8' }}>curl</code> to create unique room</div>
+                <div>• System generates room URL: <code style={{ color: '#75FDA8' }}>llamanage.daily.co/[unique-id]</code></div>
+                <div>• AI assistant joins with ElevenLabs voice (configured above)</div>
+                <div>• Call is transcribed in real-time for HIPAA-compliant records</div>
+                <div>• All conversations use your AI Configuration settings</div>
+                <div>• Supports 50+ languages with natural speech synthesis</div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
     </div>
   );
 }
