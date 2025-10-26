@@ -135,6 +135,8 @@ Build **medical consultation flows** with zero code using our drag-and-drop edit
 - **Natural text-to-speech** powered by ElevenLabs (11 voices)
 - **Live call transcription** for record-keeping
 - **Multilingual voice support** (50+ languages)
+- **Auto-generated call rooms** - Backend creates unique Daily.co URLs via API (`llamanage.daily.co/[room-id]`)
+- **Embeddable on your website** - Add voice consultation widget with simple HTML code
 - Automated call routing and after-hours handling
 - WebRTC technology for crystal-clear audio quality
 
@@ -149,6 +151,8 @@ Build **medical consultation flows** with zero code using our drag-and-drop edit
 - **Max tokens configuration** - Control response length
 - **Toggle AI features** - Enable/disable RAG and AI tools
 - All settings persist to database per user
+- **Embeddable widgets** - Get HTML code to embed chat widget on your website
+- **Voice call links** - Auto-generated Daily.co URLs (`llamanage.daily.co/[room-id]`) for voice consultations
 
 > **Perfect for health tourism**: Set your facility's primary language to match your patient demographic (e.g., Turkish clinics can set Turkish as primary, but AI responds in patient's language automatically)
 
@@ -281,7 +285,7 @@ Build **medical consultation flows** with zero code using our drag-and-drop edit
 
 ```bash
 # 1. Clone the repository
-git clone https://github.com/Convgen/frontend.git
+git clone https://github.com/Convgen/LLamanage-METALLAMAHACKATHON.git
 cd llamanage
 
 # 2. Install dependencies
@@ -406,7 +410,7 @@ llamanage/
 │   ├── main.jsx                 # App entry point
 │   └── index.css                # Global styles + Tailwind
 ├── supabase/                    # Backend configuration
-│   ├── functions/               # Edge Functions (optional)
+│   ├── functions/               # Edge Functions
 │   └── migrations/              # Database migrations
 ├── public/                      # Public assets
 ├── docs/                        # Documentation
@@ -480,8 +484,8 @@ Proprietary - All rights reserved © 2025 Certifi Team
 
 - 📧 **Email**: abdelrahman.elmorsi.20@gmail.com
 - 📚 **Documentation**: [SUPABASE_SETUP.md](./SUPABASE_SETUP.md)
-- 🐛 **Bug Reports**: [Open an issue](https://github.com/Convgen/frontend/issues)
-- 💡 **Feature Requests**: [Submit your ideas](https://github.com/Convgen/frontend/discussions)
+- 🐛 **Bug Reports**: [Open an issue](https://github.com/Convgen/LLamanage-METALLAMAHACKATHON/issues)
+- 💡 **Feature Requests**: [Submit your ideas](https://github.com/Convgen/LLamanage-METALLAMAHACKATHON/discussions)
 
 ---
 
@@ -500,7 +504,7 @@ Proprietary - All rights reserved © 2025 Certifi Team
 
 **🦙 Llamanage** - Making healthcare accessible to international patients
 
-Built with ❤️ for the health tourism industry by the Convgen team
+Built with ❤️ for the health tourism industry by the Certifi team
 
 [![GitHub stars](https://img.shields.io/github/stars/Convgen/LLamanage-METALLAMAHACKATHON?style=social)](https://github.com/Convgen/LLamanage-METALLAMAHACKATHON)
 
